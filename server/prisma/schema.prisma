@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Movie {
+  id        String    @id @unique @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  adult Boolean
+  backdropPath String
+  budget Int
+  homepage String
+  tmdbId Int
+  imdbId String
+  originalLanguage String
+  originalTitle String
+  overview String
+  popularity Float
+  posterPath String
+  releaseDate String
+  revenue Int
+  runtime Int
+  status String
+  tagline String
+  title String
+  video Boolean
+  voteAverage Float
+  voteCount Int
+
+  // genres String[]
+  // productionCompanies String[]
+  // productionCountries String[]
+  // spokenLanguages String[]
+}
+
+// model Genre {
+//   id        String    @id @unique @default(uuid())
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   tmdbId Int
+//   name String
+// }
+
+// model ProductionCompany {
+//   id        String    @id @unique @default(uuid())
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   tmdbId Int
+//   logoPath String
+//   name String
+//   originCountry String
+// }
+
+// model ProductionCountry {
+//   id        String    @id @unique @default(uuid())
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   iso_3166_1 String
+//   name String
+// }
+
+// model SpokenLanguages {
+//   id        String    @id @unique @default(uuid())
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   englishName String
+//   iso_639_1 String
+//   name String
+// }
