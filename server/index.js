@@ -2,75 +2,90 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 import axios from 'axios';
 import { PrismaClient } from '@prisma/client';
+import colors from 'colors';
 
 const prisma = new PrismaClient();
 
-const fetchESOTM = async () => {
+const fetchMoviesDetailsFromIdToId = async (startingId, endingId) => {
 	try {
-		const response = await axios.get(
-			'https://api.themoviedb.org/3/movie/38?language=en-US',
-			{
+		for (let i = 0; i < endingId; i++) {
+			const url = `https://api.themoviedb.org/3/movie/${
+				startingId + i
+			}?language=en-US`;
+
+			const options = {
 				headers: {
 					accept: 'application/json',
 					Authorization: `Bearer ${process.env.TOKEN}`,
 				},
+			};
+
+			try {
+				const response = await axios.get(url, options);
+				const movieDetails = response.data;
+
+				if (movieDetails && movieDetails.id) {
+					const checkIfIsInDb = await prisma.movie.findFirst({
+						where: {
+							tmdbId: movieDetails.id,
+						},
+					});
+
+					if (checkIfIsInDb) {
+						console.log(
+							`Movie #${checkIfIsInDb.tmdbId} - ${checkIfIsInDb.originalTitle} is already in the database.`
+								.yellow
+						);
+					} else {
+						const movieToInsert = await prisma.movie.create({
+							data: {
+								adult: movieDetails.adult,
+								backdropPath: movieDetails.backdrop_path,
+								budget: movieDetails.budget,
+								homepage: movieDetails.homepage,
+								overview: movieDetails.overview,
+								popularity: movieDetails.popularity,
+								revenue: movieDetails.revenue,
+								runtime: movieDetails.runtime,
+								status: movieDetails.status,
+								tagline: movieDetails.tagline,
+								title: movieDetails.title,
+								video: movieDetails.video,
+								tmdbId: movieDetails.id,
+								imdbId: movieDetails.imdb_id,
+								originalLanguage: movieDetails.original_language,
+								originalTitle: movieDetails.original_title,
+								posterPath: movieDetails.poster_path,
+								releaseDate: movieDetails.release_date,
+								voteAverage: movieDetails.vote_average,
+								voteCount: movieDetails.vote_count,
+								// productionCompanies: movieDetails.production_companies,
+								// productionCountries: movieDetails.production_countries,
+								// spokenLanguages: movieDetails.spoken_languages,
+							},
+						});
+
+						console.log(
+							`Movie #${movieToInsert.tmdbId} - ${movieToInsert.originalTitle} inserted to the database`
+								.green
+						);
+					}
+				}
+			} catch (error) {
+				if (error.response && error.response.status === 404) {
+					console.log(`Movie #${startingId + i} - not found.`.red);
+				} else {
+					console.log(
+						`Error fetching movie details for #${startingId + i}: ${
+							error.message
+						}`
+					);
+				}
 			}
-		);
-		return response.data;
-	} catch (error) {
-		console.error(error);
-	}
-};
-
-const testLog = async () => {
-	const movieData = await fetchESOTM();
-
-	// check if is it in db
-	if (movieData && movieData.id) {
-		const checker = await prisma.movie.findFirst({
-			where: {
-				tmdbId: movieData.id,
-			},
-		});
-
-		if (checker) {
-			console.log('Movie already in the database');
-		} else {
-			console.log('Movie not in the database');
-			// not in ? create new one
-			const movieDetails = await prisma.movie.create({
-				data: {
-					adult: movieData.adult,
-					backdropPath: movieData.backdrop_path,
-					budget: movieData.budget,
-					homepage: movieData.homepage,
-					overview: movieData.overview,
-					popularity: movieData.popularity,
-					revenue: movieData.revenue,
-					runtime: movieData.runtime,
-					status: movieData.status,
-					tagline: movieData.tagline,
-					title: movieData.title,
-					video: movieData.video,
-					tmdbId: movieData.id,
-					imdbId: movieData.imdb_id,
-					originalLanguage: movieData.original_language,
-					originalTitle: movieData.original_title,
-					posterPath: movieData.poster_path,
-					releaseDate: movieData.release_date,
-					voteAverage: movieData.vote_average,
-					voteCount: movieData.vote_count,
-					// productionCompanies: movieData.production_companies,
-					// productionCountries: movieData.production_countries,
-					// spokenLanguages: movieData.spoken_languages,
-				},
-			});
-
-			return movieDetails;
 		}
-	} else {
-		console.log('Error fetching movie data');
+	} catch (error) {
+		console.log(`An unexpected error occurred: ${error}`);
 	}
 };
 
-testLog();
+fetchMoviesDetailsFromIdToId(1, 100);
